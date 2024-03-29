@@ -4,7 +4,21 @@ on:
   pull_request:
     branches:
       - master
+env:
+  node_version: 18
 
 jobs:
   build:
-    uses: ./.github/workflows/build.yaml
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Use Node.js ${{ env.node_version }}
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ env.node_version }}
+          cache: "npm"
+
+      - name: Install / restore dependencies
+        run: npm ci

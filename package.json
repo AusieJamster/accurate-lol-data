@@ -3,7 +3,8 @@
   "version": "1.0.0",
   "author": "jamie brearley",
   "scripts": {
-    "dev": "serverless offline --config serverless.ts start --inspect --httpPort 8080"
+    "dev": "serverless offline --config serverless.ts start --inspect --httpPort 8080",
+    "aws:deploy:dev": "serverless deploy --verbose --stage dev --config serverless.ts"
   },
   "devDependencies": {
     "@serverless/typescript": "^3.38.0",

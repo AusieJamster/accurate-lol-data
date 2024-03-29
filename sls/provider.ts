@@ -9,17 +9,21 @@ const provider: AWS['provider'] = {
   timeout: 30,
   versionFunctions: true,
   environment,
-  iamRoleStatements: [
-    {
-      Effect: 'Allow',
-      Action: ['lambda:InvokeFunction'],
-      Resource: [
+  iam: {
+    role: {
+      statements: [
         {
-          'Fn::Join': [':', ['arn:aws:lambda', { Ref: 'AWS::Region' }, { Ref: 'AWS::AccountId' }, 'function', '*']]
+          Effect: 'Allow',
+          Action: ['lambda:InvokeFunction'],
+          Resource: [
+            {
+              'Fn::Join': [':', ['arn:aws:lambda', { Ref: 'AWS::Region' }, { Ref: 'AWS::AccountId' }, 'function', '*']]
+            }
+          ]
         }
       ]
     }
-  ],
+  },
   apiGateway: {
     apiKeys: [
       {
