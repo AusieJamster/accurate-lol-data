@@ -1,4 +1,4 @@
-import Logger from '../../utils/Logger';
+import Logger from '@utils/Logger';
 import { ISQSEvent } from 'types/sqs.types';
 
 export const handler = async (event: ISQSEvent): Promise<void> => {

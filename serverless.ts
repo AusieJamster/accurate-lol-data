@@ -6,7 +6,7 @@ import { iam } from './sls/resources/iam';
 
 const serverlessConfiguration: AWS = {
   service: 'accurate-lol-data',
-  plugins: ['serverless-offline', 'serverless-add-api-key'],
+  plugins: ['serverless-webpack', 'serverless-offline', 'serverless-add-api-key'],
   package: {
     individually: true,
     patterns: []
