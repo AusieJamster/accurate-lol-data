@@ -7,11 +7,25 @@ const provider: AWS['provider'] = {
   region: 'ap-southeast-2',
   runtime: 'nodejs18.x',
   timeout: 30,
-  versionFunctions: true,
+  versionFunctions: false,
   environment,
   iam: {
     role: {
       statements: [
+        {
+          Effect: 'Allow',
+          Action: ['dynamodb:GetItem', 'dynamodb:PutItem', 'dynamodb:DeleteItem', 'dynamodb:Query'],
+          Resource: [
+            { 'Fn::GetAtt': ['VersionsTable', 'Arn'] },
+            {
+              'Fn::Join': ['/', [{ 'Fn::GetAtt': ['VersionsTable', 'Arn'] }, 'index/*']]
+            },
+            { 'Fn::GetAtt': ['ChampionsTable', 'Arn'] },
+            {
+              'Fn::Join': ['/', [{ 'Fn::GetAtt': ['ChampionsTable', 'Arn'] }, 'index/*']]
+            }
+          ]
+        },
         {
           Effect: 'Allow',
           Action: ['lambda:InvokeFunction'],

@@ -3,8 +3,7 @@
     "paths": {
       "@src/*": ["src/*"],
       "@utils/*": ["src/utils/*"],
-      "@test/*": ["test/*"],
-      "@sls/*": ["sls/*"]
+      "@test/*": ["test/*"]
     }
   }
 }
