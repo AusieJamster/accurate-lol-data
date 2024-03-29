@@ -1,0 +1,19 @@
+import type { AWS } from '@serverless/typescript';
+import custom from './sls/custom';
+import functions from './sls/functions';
+import provider from './sls/provider';
+import { iam } from './sls/resources/iam';
+
+const serverlessConfiguration: AWS = {
+  service: 'accurate-lol-data',
+  plugins: ['serverless-offline', 'serverless-add-api-key'],
+  useDotenv: true,
+  custom,
+  provider,
+  resources: {
+    Resources: iam.Resources
+  },
+  functions
+};
+
+module.exports = serverlessConfiguration;
