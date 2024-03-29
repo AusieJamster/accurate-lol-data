@@ -42,13 +42,15 @@ export const handler: APIGatewayProxyHandler = async (event): Promise<APIGateway
       `https://ddragon.leagueoflegends.com/cdn/${latestVersion}/data/en_US/champion.json`
     );
     const champions = (await championsResponse.json()) as IAllChampionsResponse;
-    // (Object.values(champions.data).map((champ) => champ.key))
-    const championIds = ['90'].map((id) => ({
+    // Object.values(champions.data).map((champ) => ({ key: champ.key, id: champ.id }));
+    const prepedMessages = [{ key: '90', id: 'Malzahar' }].map(({ key, id }) => ({
       Id: `${requestId}_${id}`,
       MessageBody: JSON.stringify({
         isDebug,
         requestId,
-        championId: id
+        version: latestVersion,
+        championId: id,
+        championKey: key
       })
     }));
 
@@ -60,16 +62,16 @@ export const handler: APIGatewayProxyHandler = async (event): Promise<APIGateway
     do {
       const sqsInput: SendMessageBatchCommandInput = {
         QueueUrl: custom.championImportQueueUrl,
-        Entries: championIds.splice(0, 10)
+        Entries: prepedMessages.splice(0, 10)
       };
       const command = new SendMessageBatchCommand(sqsInput);
       response = await sqsClient.send(command);
 
       failedOutput.push(...(response.Failed || []));
       successfulOutput.push(...(response.Successful || []));
-    } while (championIds.length > 0);
+    } while (prepedMessages.length > 0);
 
-    logger.debug(failedOutput);
+    logger.debug('failedOutput', failedOutput);
 
     failedOutput.forEach(logger.error);
 
