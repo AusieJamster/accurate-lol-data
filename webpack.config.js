@@ -18,8 +18,7 @@ module.exports = {
     alias: {
       '@src': path.resolve(__dirname, 'src/'),
       '@utils': path.resolve(__dirname, 'src/utils/'),
-      '@test': path.resolve(__dirname, 'test/'),
-      '@sls': path.resolve(__dirname, 'sls/')
+      '@test': path.resolve(__dirname, 'test/')
     }
   },
   output: {

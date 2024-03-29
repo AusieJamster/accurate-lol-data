@@ -2,7 +2,8 @@ import type { AWS } from '@serverless/typescript';
 import custom from './sls/custom';
 import functions from './sls/functions';
 import provider from './sls/provider';
-import { iam } from './sls/resources/iam';
+import iam from './sls/resources/iam';
+import dynamodb from './sls/resources/dynamodb';
 
 const serverlessConfiguration: AWS = {
   service: 'accurate-lol-data',
@@ -15,7 +16,7 @@ const serverlessConfiguration: AWS = {
   custom,
   provider,
   resources: {
-    Resources: iam.Resources
+    Resources: { ...iam, ...dynamodb }
   },
   functions
 };

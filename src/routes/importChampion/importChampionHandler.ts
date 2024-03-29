@@ -1,12 +1,11 @@
 import Logger from '@utils/Logger';
-import { ISQSEvent } from 'types/sqs.types';
+import { ISQSEvent, TSQSChampionImportMessageBody } from 'types/sqs.types';
 
 export const handler = async (event: ISQSEvent): Promise<void> => {
   try {
     event = { Records: [] };
     event.Records.forEach((val) => {
-      const { isDebug, requestId, championId } = { isDebug: true, requestId: 'jamie', championId: '90' };
-      // JSON.parse(val.body) as TSQSChampionImportMessageBody;
+      const { isDebug, requestId, championId } = JSON.parse(val.body) as TSQSChampionImportMessageBody;
 
       const logger = new Logger(isDebug, requestId);
 
