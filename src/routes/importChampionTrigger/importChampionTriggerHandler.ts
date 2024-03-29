@@ -1,6 +1,11 @@
 import { DynamoDBClient, GetItemCommand, GetItemInput } from '@aws-sdk/client-dynamodb';
 import { marshall } from '@aws-sdk/util-dynamodb';
-import type { SendMessageBatchCommandInput } from '@aws-sdk/client-sqs';
+import type {
+  BatchResultErrorEntry,
+  SendMessageBatchCommandInput,
+  SendMessageBatchCommandOutput,
+  SendMessageBatchResultEntry
+} from '@aws-sdk/client-sqs';
 import { SQSClient, SendMessageBatchCommand } from '@aws-sdk/client-sqs';
 import custom from '../../../sls/custom';
 import { getRequestContext } from '@utils/request';
@@ -37,31 +42,49 @@ export const handler: APIGatewayProxyHandler = async (event): Promise<APIGateway
       `https://ddragon.leagueoflegends.com/cdn/${latestVersion}/data/en_US/champion.json`
     );
     const champions = (await championsResponse.json()) as IAllChampionsResponse;
-    const championIds = Object.values(champions.data).map((champ) => champ.key);
+    // (Object.values(champions.data).map((champ) => champ.key))
+    const championIds = ['90'].map((id) => ({
+      Id: `${requestId}_${id}`,
+      MessageBody: JSON.stringify({
+        isDebug,
+        requestId,
+        championId: id
+      })
+    }));
 
     const sqsClient = new SQSClient();
-    const sqsInput: SendMessageBatchCommandInput = {
-      QueueUrl: custom.championImportQueueUrl,
-      Entries: championIds.map((id) => ({
-        Id: `${requestId}_${id}`,
-        MessageBody: JSON.stringify({
-          isDebug,
-          requestId,
-          championId: id
-        })
-      }))
-    };
-    const command = new SendMessageBatchCommand(sqsInput);
-    const response = await sqsClient.send(command);
+    const successfulOutput: SendMessageBatchResultEntry[] = [];
+    const failedOutput: BatchResultErrorEntry[] = [];
+    let response: SendMessageBatchCommandOutput | null = null;
 
-    response.Failed?.forEach(logger.error);
+    do {
+      const sqsInput: SendMessageBatchCommandInput = {
+        QueueUrl: custom.championImportQueueUrl,
+        Entries: championIds.splice(0, 10)
+      };
+      const command = new SendMessageBatchCommand(sqsInput);
+      response = await sqsClient.send(command);
+
+      failedOutput.push(...(response.Failed || []));
+      successfulOutput.push(...(response.Successful || []));
+    } while (championIds.length > 0);
+
+    logger.debug(failedOutput);
+
+    failedOutput.forEach(logger.error);
 
     return {
       statusCode: 200,
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(response.Successful)
+      body: JSON.stringify({
+        isDebug,
+        requestId,
+        championsFound: Object.values(champions.data).length,
+        messagesSent: successfulOutput.length
+      })
     };
   } catch (err) {
+    logger.error(err);
     return {
       statusCode: 500,
       headers: { 'Content-Type': 'application/json' },
