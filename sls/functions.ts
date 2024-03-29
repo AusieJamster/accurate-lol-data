@@ -18,7 +18,7 @@ const CORS: TCors = {
 
 const functions: AWS['functions'] = {
   importChampion: {
-    handler: 'src/routes/importChampion/importChampionHandler.ts.handler',
+    handler: 'src/routes/importChampion/importChampionHandler.handler',
     reservedConcurrency: 5,
     events: [
       {
