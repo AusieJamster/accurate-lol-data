@@ -1,6 +1,6 @@
 type Callback<TResult = any> = (error?: Error | string | null, result?: TResult) => void;
 
-interface Context {
+export interface AwsContext {
   callbackWaitsForEmptyEventLoop: boolean;
   functionName: string;
   functionVersion: string;
@@ -32,7 +32,7 @@ interface Context {
 
 type Handler<TEvent = any, TResult = any> = (
   event: TEvent,
-  context: Context,
+  context: AwsContext,
   callback: Callback<TResult>
 ) => void | Promise<TResult>;
 

@@ -15,7 +15,8 @@ const custom = {
     'https://sqs.ap-southeast-2.amazonaws.com/332660368510/accurate-lol-data-dev-championImportQueue',
 
   versionsTableName: 'accurate-lol-data-dev-versions',
-  championsTableName: 'accurate-lol-data-dev-champions'
+  championsTableName: 'accurate-lol-data-dev-champions',
+  wikiChampionDataName: 'accurate-lol-data-dev-wiki'
 };
 
 export default custom;

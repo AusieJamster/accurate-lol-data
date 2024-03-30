@@ -4,6 +4,7 @@
   "author": "jamie brearley",
   "scripts": {
     "aws:deploy:dev": "serverless deploy --verbose --stage dev --config serverless.ts",
+    "aws:remove:dev": "serverless remove --verbose --stage dev --config serverless.ts",
     "offline": "serverless offline --config serverless.ts --stage local start",
     "webpack": "serverless webpack --config serverless.ts",
     "test": "jest --passWithNoTests"
@@ -37,7 +38,10 @@
     "@aws-sdk/client-dynamodb": "^3.540.0",
     "@aws-sdk/client-lambda": "^3.540.0",
     "@aws-sdk/client-sqs": "^3.540.0",
+    "@aws-sdk/client-ssm": "^3.540.0",
     "@aws-sdk/util-dynamodb": "^3.540.0",
-    "uuidv4": "^6.2.13"
+    "@sparticuz/chromium": "^112.0.2",
+    "openai": "^4.30.0",
+    "puppeteer-core": "^19.8.0"
   }
 }

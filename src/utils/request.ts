@@ -1,7 +1,6 @@
-import type { APIGatewayProxyEvent } from 'types/lambda.types';
-import { uuid } from 'uuidv4';
+import type { APIGatewayProxyEvent, AwsContext } from 'types/lambda.types';
 
-export const getRequestContext = (event: APIGatewayProxyEvent) => ({
+export const getRequestContext = (event: APIGatewayProxyEvent, context: AwsContext) => ({
   isDebug: !!event.headers?.isDebug,
-  requestId: event.headers?.request || uuid()
+  requestId: event.headers?.request || context.awsRequestId || 'request-id-fallback'
 });

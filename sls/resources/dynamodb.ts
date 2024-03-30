@@ -20,6 +20,16 @@ const dynamodb = {
       KeySchema: [{ AttributeName: 'id', KeyType: 'HASH' }],
       ProvisionedThroughput: { ReadCapacityUnits: 1, WriteCapacityUnits: 1 }
     }
+  },
+  WikiDataTable: {
+    Type: 'AWS::DynamoDB::Table',
+    DeletionPolicy: 'Delete',
+    Properties: {
+      TableName: custom.wikiChampionDataName,
+      AttributeDefinitions: [{ AttributeName: 'id', AttributeType: 'S' }],
+      KeySchema: [{ AttributeName: 'id', KeyType: 'HASH' }],
+      ProvisionedThroughput: { ReadCapacityUnits: 1, WriteCapacityUnits: 1 }
+    }
   }
 } as const;
 

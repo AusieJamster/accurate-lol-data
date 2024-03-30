@@ -1,6 +1,6 @@
-import { Champion } from '@src/utils/Champion';
+import { Champion } from '@src/services/Champion';
 import Logger from '@utils/Logger';
-import { ISQSEvent, TSQSChampionImportMessageBody } from 'types/sqs.types';
+import type { ISQSEvent, TSQSChampionImportMessageBody } from 'types/sqs.types';
 
 export const handler = async (event: ISQSEvent): Promise<void> => {
   try {
@@ -19,13 +19,8 @@ export const handler = async (event: ISQSEvent): Promise<void> => {
       logger.debug('Beginning champion import of', championId, championKey);
 
       const champion = new Champion(version, championId, championKey);
-      await champion.fetchFromRiotApi();
-      await champion.fetchFromCDragon();
-
-      // use GPT to merge the result
-
-      // store the result in dynamodb
-      // store the version in dynamodb
+      const finalChamp = await champion.merge();
+      await champion.putDynamoDocument(finalChamp);
 
       logger.debug('Succesfullly imported champion', championId, championKey);
     });

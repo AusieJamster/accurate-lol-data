@@ -11,7 +11,7 @@ export interface CDragonChampionData {
   chooseVoPath: string;
   banVoPath: string;
   roles: string[];
-  recommendedItemDefaults: any[];
+  recommendedItemDefaults: unknown[];
   skins: Skin[];
   passive: Spell;
   spells: Spell[];
@@ -46,11 +46,11 @@ interface Skin {
   collectionSplashVideoPath: string | null;
   featuresText: string | null;
   chromaPath: string | null;
-  emblems: any | null;
+  emblems: unknown | null;
   regionRarityId: number;
   rarityGemPath: string | null;
   skinLines: SkinLine[] | null;
-  skinAugments: any | null;
+  skinAugments: unknown | null;
   description: string | null;
 }
 

@@ -14,6 +14,15 @@ const provider: AWS['provider'] = {
       statements: [
         {
           Effect: 'Allow',
+          Action: ['ssm:GetParameter*'],
+          Resource: [
+            {
+              'Fn::Join': [':', ['arn:aws:ssm', { Ref: 'AWS::Region' }, { Ref: 'AWS::AccountId' }, 'parameter/*']]
+            }
+          ]
+        },
+        {
+          Effect: 'Allow',
           Action: ['dynamodb:GetItem', 'dynamodb:PutItem', 'dynamodb:DeleteItem', 'dynamodb:Query'],
           Resource: [
             { 'Fn::GetAtt': ['VersionsTable', 'Arn'] },
@@ -23,6 +32,10 @@ const provider: AWS['provider'] = {
             { 'Fn::GetAtt': ['ChampionsTable', 'Arn'] },
             {
               'Fn::Join': ['/', [{ 'Fn::GetAtt': ['ChampionsTable', 'Arn'] }, 'index/*']]
+            },
+            { 'Fn::GetAtt': ['WikiDataTable', 'Arn'] },
+            {
+              'Fn::Join': ['/', [{ 'Fn::GetAtt': ['WikiDataTable', 'Arn'] }, 'index/*']]
             }
           ]
         },

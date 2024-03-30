@@ -1,4 +1,5 @@
-import { DynamoDBClient, GetItemCommand, GetItemInput } from '@aws-sdk/client-dynamodb';
+import type { GetItemInput } from '@aws-sdk/client-dynamodb';
+import { DynamoDBClient, GetItemCommand } from '@aws-sdk/client-dynamodb';
 import { marshall } from '@aws-sdk/util-dynamodb';
 import type {
   BatchResultErrorEntry,
@@ -11,9 +12,10 @@ import custom from '../../../sls/custom';
 import { getRequestContext } from '@utils/request';
 import type { APIGatewayProxyHandler, APIGatewayProxyResult } from 'types/lambda.types';
 import Logger from '@src/utils/Logger';
+import type { RiotGamesAllChampionsResponse } from 'types/ddragon.types';
 
-export const handler: APIGatewayProxyHandler = async (event): Promise<APIGatewayProxyResult> => {
-  const { isDebug, requestId } = getRequestContext(event);
+export const handler: APIGatewayProxyHandler = async (event, context): Promise<APIGatewayProxyResult> => {
+  const { isDebug, requestId } = getRequestContext(event, context);
   const logger = new Logger(isDebug, requestId);
 
   try {
@@ -41,7 +43,7 @@ export const handler: APIGatewayProxyHandler = async (event): Promise<APIGateway
     const championsResponse = await fetch(
       `https://ddragon.leagueoflegends.com/cdn/${latestVersion}/data/en_US/champion.json`
     );
-    const champions = (await championsResponse.json()) as IAllChampionsResponse;
+    const champions = (await championsResponse.json()) as RiotGamesAllChampionsResponse;
     // Object.values(champions.data).map((champ) => ({ key: champ.key, id: champ.id }));
     const prepedMessages = [{ key: '90', id: 'Malzahar' }].map(({ key, id }) => ({
       Id: `${requestId}_${id}`,
