@@ -13,21 +13,27 @@ import { getRequestContext } from '@utils/request';
 import type { APIGatewayProxyHandler, APIGatewayProxyResult } from 'types/lambda.types';
 import Logger from '@src/utils/Logger';
 import type { RiotGamesAllChampionsResponse } from 'types/ddragon.types';
+import axios from 'axios';
 
 export const handler: APIGatewayProxyHandler = async (event, context): Promise<APIGatewayProxyResult> => {
+  console.log('DEBUG: ', event, context);
   const { isDebug, requestId } = getRequestContext(event, context);
   const logger = new Logger(isDebug, requestId);
 
+  logger.debug('Running handler...');
+
   try {
-    const versionsResponse = await fetch('https://ddragon.leagueoflegends.com/api/versions.json');
-    const versions = (await versionsResponse.json()) as string[];
+    const versionsResponse = await axios.get<string[]>('https://ddragon.leagueoflegends.com/api/versions.json');
+    const versions = versionsResponse.data;
+    logger.debug('versions response', versions);
     const latestVersion = versions.shift();
     if (!latestVersion) throw new Error('call to riot games api for versions failed.');
+    logger.debug('latestVersion', latestVersion);
 
-    const dynamoClient = new DynamoDBClient();
+    const dynamoClient = new DynamoDBClient({ logger });
     const dynamoInput: GetItemInput = {
-      TableName: custom.versionsTableName,
-      Key: marshall({ version: latestVersion })
+      TableName: custom.championsTableName,
+      Key: marshall({ version: latestVersion, id: '90' })
     };
     const dynamoCommand = new GetItemCommand(dynamoInput);
     const dynamoResponse = await dynamoClient.send(dynamoCommand);
@@ -44,19 +50,20 @@ export const handler: APIGatewayProxyHandler = async (event, context): Promise<A
       `https://ddragon.leagueoflegends.com/cdn/${latestVersion}/data/en_US/champion.json`
     );
     const champions = (await championsResponse.json()) as RiotGamesAllChampionsResponse;
-    // Object.values(champions.data).map((champ) => ({ key: champ.key, id: champ.id }));
-    const prepedMessages = [{ key: '90', id: 'Malzahar' }].map(({ key, id }) => ({
-      Id: `${requestId}_${id}`,
-      MessageBody: JSON.stringify({
-        isDebug,
-        requestId,
-        version: latestVersion,
-        championId: id,
-        championKey: key
-      })
-    }));
+    const prepedMessages = Object.values(champions.data)
+      .map((champ) => ({ key: champ.key, id: champ.id }))
+      .map(({ key, id }) => ({
+        Id: `${requestId}_${id}`,
+        MessageBody: JSON.stringify({
+          isDebug,
+          requestId,
+          version: latestVersion,
+          championId: id,
+          championKey: key
+        })
+      }));
 
-    const sqsClient = new SQSClient();
+    const sqsClient = new SQSClient({ logger });
     const successfulOutput: SendMessageBatchResultEntry[] = [];
     const failedOutput: BatchResultErrorEntry[] = [];
     let response: SendMessageBatchCommandOutput | null = null;

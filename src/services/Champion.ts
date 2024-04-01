@@ -1,9 +1,7 @@
 import type { RiotGamesChampionData, RiotGamesAllChampionsResponse } from 'types/ddragon.types';
 import { truncateVersion } from '../utils/common';
 import type { CDragonChampionData } from 'types/cdragon.types';
-import chromium from '@sparticuz/chromium';
 import OpenAI from 'openai';
-import RealSsmProvider from '@src/services/RealSsmProvider';
 
 import openAIChampionSchema from '../../types/openaiChampion.json';
 import type { PutItemInput } from '@aws-sdk/client-dynamodb';
@@ -12,69 +10,82 @@ import { marshall } from '@aws-sdk/util-dynamodb';
 import type { FinalChampion } from 'types/champion.types';
 import custom from '../../sls/custom';
 import { ServerError } from './Error';
+import type Logger from '@src/utils/Logger';
+import axios from 'axios';
 
 export class Champion {
   private openai: OpenAI | null = null;
-  private openaiApiKey: string | null = null;
-  private readonly getSsmProvider;
 
   constructor(
     private readonly version: string,
     private readonly championId: string,
-    private readonly championKey: string
+    private readonly championKey: string,
+    private readonly logger: Logger
   ) {
-    chromium.setHeadlessMode = true;
-    chromium.setGraphicsMode = false;
-    this.getSsmProvider = new RealSsmProvider();
+    this.logger.debug('Initialising Champion...');
   }
 
   async initOpenAI() {
-    if (this.openai) return;
+    this.logger.debug('Initialising OpenAI...');
 
-    this.openaiApiKey = await this.getSsmProvider
-      .getParameterFromSsm('/accurate-data-lol/gpt/api-key', true)
-      .then((res) => {
-        if (!res) throw new Error('Unable to obtain gpt api key');
-        return res;
-      });
+    if (this.openai) return this.openai;
 
-    if (this.openaiApiKey) {
-      this.openai = new OpenAI({ apiKey: this.openaiApiKey });
+    this.logger.debug('Getting OpenAI ApiKey...');
+
+    if (!process.env.OPENAI_API_KEY) {
+      throw new Error('Unable to obtain openapi api key.');
     }
+
+    this.openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
     if (!this.openai) {
       throw new Error('Unable to initialise openai');
     }
+
+    this.logger.debug('Returning OpenAI...');
+
+    return this.openai;
   }
 
   private async fetchFromRiotApi(): Promise<RiotGamesChampionData> {
-    const url = new URL(
-      `https://ddragon.leagueoflegends.com/cdn/${this.version}/data/en_US/champion/${this.championId}.json`
-    );
+    this.logger.debug('Fetching champion from RiotGames API...');
+
     try {
-      const riotApiResponse = await fetch(url.href);
-      const championData = (await riotApiResponse.json()) as RiotGamesAllChampionsResponse;
-      const champion = Object.values(championData.data).shift();
-      if (!champion) throw new Error();
+      const url = new URL(
+        `https://ddragon.leagueoflegends.com/cdn/${this.version}/data/en_US/champion/${this.championId}.json`
+      );
+      const riotApiResponse = await axios.get<RiotGamesAllChampionsResponse>(url.href, {
+        headers: { Accept: 'application/json' }
+      });
+      const champion = Object.values(riotApiResponse.data.data).shift();
+      if (!champion) throw new Error('Obtained null riot games api champion data');
+
+      this.logger.debug('RiotGames API', champion);
 
       return champion;
     } catch (err) {
-      throw new Error(`Unable to obtain champion info from riot games api: ${url.href}`);
+      this.logger.error('Unable to obtain champion info from riot games api', err);
+      throw new ServerError('Unable to obtain champion info from riot games api');
     }
   }
 
   private async fetchFromCDragon(): Promise<CDragonChampionData> {
-    const url = new URL(
-      `https://raw.communitydragon.org/${truncateVersion(this.version)}/plugins/rcp-be-lol-game-data/global/en_au/v1/champions/${this.championKey}.json`
-    );
+    this.logger.debug('Fetching champion from community dragon API...');
     try {
-      const riotApiResponse = await fetch(url.href);
-      const championData = (await riotApiResponse.json()) as CDragonChampionData;
-      if (!championData) throw new Error();
+      const url = new URL(
+        `https://raw.communitydragon.org/${truncateVersion(this.version)}/plugins/rcp-be-lol-game-data/global/en_au/v1/champions/${this.championKey}.json`
+      );
+      const cDragonResponse = await axios.get<CDragonChampionData>(url.href, {
+        headers: { Accept: 'application/json' }
+      });
+      const championData = cDragonResponse.data;
+      this.logger.debug('response body', championData);
+      if (!championData) throw new Error('Obtained null community dragon champion data');
 
       return championData;
     } catch (err) {
-      throw new Error(`Unable to obtain champion info from community dragon: ${url.href}`);
+      this.logger.error('Unable to obtain champion info from community dragon', err);
+      throw new Error('Unable to obtain champion info from community dragon');
     }
   }
 
@@ -105,20 +116,22 @@ export class Champion {
   //   return {};
   // }
 
-  async putDynamoDocument(champion: FinalChampion): Promise<void> {
-    const client = new DynamoDBClient();
+  async putDynamoDocument(version: string, champion: FinalChampion): Promise<void> {
+    this.logger.debug('Putting in DynamoDb...');
+
+    const client = new DynamoDBClient({ logger: this.logger });
 
     const input: PutItemInput = {
       TableName: custom.championsTableName,
-      Item: marshall(champion)
+      Item: marshall({ ...champion, version })
     };
 
     const command = new PutItemCommand(input);
     await client.send(command);
   }
 
-  async merge(): Promise<FinalChampion> {
-    await this.initOpenAI();
+  async getFinalChampion(): Promise<FinalChampion> {
+    this.logger.debug('Running getFinalChampion...');
 
     const [riotGamesChampion, rawCDragonChampion] = await Promise.allSettled([
       this.fetchFromRiotApi(),
@@ -132,6 +145,9 @@ export class Champion {
       throw new Error(reason || 'Failed to obtain CDragon champion data');
     }
 
+    this.logger.debug('Obtained All Champion Data');
+
+    await this.initOpenAI();
     if (!this.openai) throw new Error('Openai is not initialised');
 
     const rawChampion = await this.openai.chat.completions.create({
@@ -148,6 +164,8 @@ export class Champion {
         }
       ]
     });
+
+    this.logger.debug('Obtained openai response', rawChampion);
 
     const champion = rawChampion.choices[0]?.message.content || null;
 

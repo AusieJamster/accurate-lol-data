@@ -20,19 +20,11 @@ const functions: AWS['functions'] = {
   importChampion: {
     handler: 'src/routes/importChampion/importChampionHandler.handler',
     reservedConcurrency: 5,
+    timeout: 900,
     events: [
-      {
-        http: {
-          path: 'import/champion',
-          method: 'PUT',
-          private: true,
-          cors: CORS
-        }
-      },
       {
         sqs: {
           arn: { 'Fn::GetAtt': ['ChampionImportQueue', 'Arn'] }
-          // batchSize: 5
         }
       }
     ]
@@ -48,6 +40,7 @@ const functions: AWS['functions'] = {
           cors: CORS
         }
       }
+      // { schedule: 'rate(30 minute)' }
     ]
   }
 };

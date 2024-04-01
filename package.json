@@ -38,9 +38,9 @@
     "@aws-sdk/client-dynamodb": "^3.540.0",
     "@aws-sdk/client-lambda": "^3.540.0",
     "@aws-sdk/client-sqs": "^3.540.0",
-    "@aws-sdk/client-ssm": "^3.540.0",
     "@aws-sdk/util-dynamodb": "^3.540.0",
     "@sparticuz/chromium": "^112.0.2",
+    "axios": "^1.6.8",
     "openai": "^4.30.0",
     "puppeteer-core": "^19.8.0"
   }

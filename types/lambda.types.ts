@@ -1,4 +1,4 @@
-type Callback<TResult = any> = (error?: Error | string | null, result?: TResult) => void;
+type Callback<TResult = unknown> = (error?: Error | string | null, result?: TResult) => void;
 
 export interface AwsContext {
   callbackWaitsForEmptyEventLoop: boolean;
@@ -19,18 +19,18 @@ export interface AwsContext {
   // as of the 12.x runtime, so they are not removed from the types.
 
   /** @deprecated Use handler callback or promise result */
-  done(error?: Error, result?: any): void;
+  done(error?: Error, result?: unknown): void;
   /** @deprecated Use handler callback with first argument or reject a promise result */
   fail(error: Error | string): void;
   /** @deprecated Use handler callback with second argument or resolve a promise result */
-  succeed(messageOrObject: any): void;
-  // Unclear what behavior this is supposed to have, I couldn't find any still extant reference,
+  succeed(messageOrObject: unknown): void;
+  // Unclear what behavior this is supposed to have, I couldn't find unknown still extant reference,
   // and it behaves like the above, ignoring the object parameter.
   /** @deprecated Use handler callback or promise result */
-  succeed(message: string, object: any): void;
+  succeed(message: string, object: unknown): void;
 }
 
-type Handler<TEvent = any, TResult = any> = (
+type Handler<TEvent = unknown, TResult = unknown> = (
   event: TEvent,
   context: AwsContext,
   callback: Callback<TResult>
@@ -130,7 +130,7 @@ type APIGatewayEventDefaultAuthorizerContext =
   | undefined
   | null
   | {
-      [name: string]: any;
+      [name: string]: unknown;
     };
 
 export type APIGatewayProxyEvent = APIGatewayProxyEventBase<APIGatewayEventDefaultAuthorizerContext>;

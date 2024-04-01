@@ -25,10 +25,6 @@ const provider: AWS['provider'] = {
           Effect: 'Allow',
           Action: ['dynamodb:GetItem', 'dynamodb:PutItem', 'dynamodb:DeleteItem', 'dynamodb:Query'],
           Resource: [
-            { 'Fn::GetAtt': ['VersionsTable', 'Arn'] },
-            {
-              'Fn::Join': ['/', [{ 'Fn::GetAtt': ['VersionsTable', 'Arn'] }, 'index/*']]
-            },
             { 'Fn::GetAtt': ['ChampionsTable', 'Arn'] },
             {
               'Fn::Join': ['/', [{ 'Fn::GetAtt': ['ChampionsTable', 'Arn'] }, 'index/*']]
