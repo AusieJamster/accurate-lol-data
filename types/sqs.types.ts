@@ -1,7 +1,9 @@
 export type TSQSChampionImportMessageBody = {
   isDebug?: boolean;
   requestId: string;
+  version: string;
   championId: string;
+  championKey: string;
 };
 
 interface SQSMessageAttributes {

@@ -19,4 +19,11 @@ export default class Logger {
   error(...msg: unknown[]) {
     console.error(this.requestId, ...msg);
   }
+
+  info(...msg: unknown[]) {
+    this.log(msg);
+  }
+  trace(...msg: unknown[]) {
+    this.warn(msg);
+  }
 }
